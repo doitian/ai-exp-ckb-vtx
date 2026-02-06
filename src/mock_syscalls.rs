@@ -101,8 +101,11 @@ impl VtxSyscallContext {
 
     /// Mock implementation of `ckb_load_tx_hash`.
     ///
-    /// Returns the hash of the composed transaction. Since we're in a VTx
-    /// context, this returns a hash derived from the VTx's content.
+    /// Note: In a VTx context, this returns a hash derived from the VTx's
+    /// own components rather than the composed transaction hash. The real
+    /// composed transaction hash is only available after all VTxs are composed.
+    /// Callers that need the real tx hash should compose first, then use the
+    /// resulting `TransactionView::hash()`.
     pub fn load_tx_hash(&self) -> VtxResult<[u8; 32]> {
         // In a real scenario, this would be the hash of the composed tx.
         // For the VTx context, we compute a hash from the VTx's inputs.

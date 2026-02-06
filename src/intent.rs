@@ -142,6 +142,11 @@ impl Intent {
         }
 
         if let Some(ref fee) = self.fee_constraint {
+            // In a valid CKB transaction, total input capacity should always
+            // be >= total output capacity (the difference is the fee). We use
+            // saturating_sub so that obviously invalid states (outputs > inputs)
+            // simply result in a fee of 0, which will pass the max_fee check.
+            // Transaction validity itself is enforced elsewhere by CKB consensus.
             let actual_fee = total_input_capacity.saturating_sub(total_output_capacity);
             if let Some(max_fee) = fee.max_fee {
                 if actual_fee > max_fee {

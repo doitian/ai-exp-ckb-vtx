@@ -14,8 +14,9 @@ use crate::spec::VtxSpec;
 
 /// A virtual transaction containing a partial set of CKB transaction components.
 ///
-/// Each VTx owns an exclusive subset of the complete transaction's inputs,
-/// outputs, witnesses, cell deps, and header deps as specified by its `VtxSpec`.
+/// Each VTx owns disjoint ranges of the composed transaction's inputs, outputs,
+/// and witnesses (as specified by its `VtxSpec`). Cell deps and header deps
+/// are shared and deduplicated when VTxs are composed.
 #[derive(Clone, Debug)]
 pub struct VirtualTx {
     /// The inputs owned by this VTx.
@@ -163,9 +164,18 @@ impl VirtualTx {
             }
         }
 
-        // Calculate total sizes
-        let total_inputs: usize = vtxs.iter().map(|v| v.spec.input_range.len()).sum();
-        let total_outputs: usize = vtxs.iter().map(|v| v.spec.output_range.len()).sum();
+        // Calculate total sizes as the maximum end across all ranges.
+        // Ranges must be contiguous or leave gaps that remain unfilled.
+        let total_inputs = vtxs
+            .iter()
+            .map(|v| v.spec.input_range.end)
+            .max()
+            .unwrap_or(0);
+        let total_outputs = vtxs
+            .iter()
+            .map(|v| v.spec.output_range.end)
+            .max()
+            .unwrap_or(0);
 
         // Allocate vectors for the composed tx
         let mut all_inputs: Vec<Option<CellInput>> = vec![None; total_inputs];

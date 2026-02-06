@@ -11,16 +11,17 @@ use crate::error::{VtxError, VtxResult};
 
 /// Specification for how a VTx's components map to the complete transaction.
 ///
-/// Each VTx exclusively owns ranges of inputs and outputs in the final
-/// composed transaction. Cell deps and header deps are merged with deduplication.
+/// Each VTx owns non-overlapping (disjoint) ranges of input and output indices
+/// in the composed transaction. Cell deps and header deps are merged with
+/// deduplication.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct VtxSpec {
     /// The range of input indices this VTx occupies in the composed tx.
-    /// Inputs are exclusive - no two VTxs share the same input index.
+    /// Must be disjoint with input ranges of all other VTxs.
     pub input_range: Range<usize>,
 
     /// The range of output indices this VTx occupies in the composed tx.
-    /// Outputs are exclusive - no two VTxs share the same output index.
+    /// Must be disjoint with output ranges of all other VTxs.
     pub output_range: Range<usize>,
 
     /// Index of this VTx within the set of VTxs being composed.
